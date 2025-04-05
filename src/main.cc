@@ -3,13 +3,17 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "Vulkan/debug.h";
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <cstring>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
+
 
 class HelloTriangleApplication {
 public:
@@ -40,6 +44,11 @@ private:
 
 	void createInstance()
 	{
+		if (enableValidationLayers && !VkDebug::CheckValidationLayerSupport())
+		{
+			throw std::runtime_error("Validation layers requested, but not available!");
+		}
+
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Hello Triangle";
@@ -60,7 +69,15 @@ private:
 		//createInfo.enabledExtensionCount = glfwExtentionCount;
 		//createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-		createInfo.enabledLayerCount = 0;
+		if (enableValidationLayers)
+		{
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+		else
+		{
+			createInfo.enabledLayerCount = 0;
+		}
 
 		std::vector<const char*> requiredExtensions;
 

@@ -13,7 +13,8 @@ SET(ENV_ROOT ${CMAKE_CURRENT_DIR})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 ADD_SUBDIRECTORY(external)
+ADD_SUBDIRECTORY(src)
 
-add_executable(VulkanSandbox src/main.cc)
-
-target_link_libraries(VulkanSandbox PRIVATE Vulkan::Vulkan glfw glm::glm)
+IF(MSVC)
+    set_property(TARGET VulkanSandbox PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+ENDIF()
