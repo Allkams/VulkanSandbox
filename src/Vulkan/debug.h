@@ -25,6 +25,7 @@ namespace VkDebug
 
 	std::vector<const char*> getRequiredExtensions();
 
+	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
 	VkResult CreateDebugUtilsMessangerEXT(
 		VkInstance instance,
