@@ -40,6 +40,7 @@ private:
 	void initVulkan()
 	{
 		createInstance();
+		setupDebugMessenger();
 	}
 
 	void createInstance()
@@ -61,14 +62,6 @@ private:
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
 
-		uint32_t glfwExtentionCount = 0;
-		const char** glfwExtensions;
-
-		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtentionCount);
-
-		//createInfo.enabledExtensionCount = glfwExtentionCount;
-		//createInfo.ppEnabledExtensionNames = glfwExtensions;
-
 		if (enableValidationLayers)
 		{
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -79,35 +72,70 @@ private:
 			createInfo.enabledLayerCount = 0;
 		}
 
-		std::vector<const char*> requiredExtensions;
+		//uint32_t glfwExtentionCount = 0;
+		//const char** glfwExtensions;
 
-		for (uint32_t i = 0; i < glfwExtentionCount; i++)
-		{
-			requiredExtensions.emplace_back(glfwExtensions[i]);
-		}
+		//glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtentionCount);
 
-		requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		//createInfo.enabledExtensionCount = glfwExtentionCount;
+		//createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-		createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+		//std::vector<const char*> requiredExtensions;
 
-		createInfo.enabledExtensionCount = (uint32_t) requiredExtensions.size();
-		createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-		//VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+		//for (uint32_t i = 0; i < glfwExtentionCount; i++)
+		//{
+		//	requiredExtensions.emplace_back(glfwExtensions[i]);
+		//}
+
+		//requiredExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+
+		//createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+
+		auto extensions = VkDebug::getRequiredExtensions();
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+		createInfo.ppEnabledExtensionNames = extensions.data();
+
 
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create instance!");
 		}
 
-		uint32_t extensionCount = 0;
-		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+		//uint32_t extensionCount = 0;
+		//vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
-		std::vector<VkExtensionProperties> extensions(extensionCount);
+		//std::vector<VkExtensionProperties> extensions(extensionCount);
 
-		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+		//vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-		std::cout << "Available extensions:\n";
-		for (const auto& extension : extensions) {
-			std::cout << '\t' << extension.extensionName << std::endl;
+		//std::cout << "Available extensions:\n";
+		//for (const auto& extension : extensions) {
+		//	std::cout << '\t' << extension.extensionName << std::endl;
+		//}
+	}
+
+	void setupDebugMessenger()
+	{
+		if (!enableValidationLayers) return;
+
+		VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+
+		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+
+		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
+			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
+			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+		createInfo.pfnUserCallback = VkDebug::debugCallback;
+
+		createInfo.pUserData = nullptr;
+
+		if (VkDebug::CreateDebugUtilsMessangerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to set up debug messenger!");
 		}
 	}
 
@@ -122,6 +150,11 @@ private:
 
 	void cleanup()
 	{
+		if (enableValidationLayers)
+		{
+			VkDebug::DestroyDebugUtilsMessangerEXT(instance, debugMessenger, nullptr);
+		}
+
 		vkDestroyInstance(instance, nullptr);
 
 		glfwDestroyWindow(window);
@@ -132,6 +165,7 @@ private:
 private:
 	GLFWwindow* window;
 	VkInstance instance;
+	VkDebugUtilsMessengerEXT debugMessenger;
 };
 
 int main()
